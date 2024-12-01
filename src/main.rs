@@ -19,7 +19,7 @@ fn main() {
 
                 let mut preamble = [0u8; 12];
                 let req = stream.read(&mut preamble).unwrap();
-                assert!(req == 12);
+                println!("read {} bytes from req", req);
                 // correlation id is last 4 bytes as u32
                 let mut cid = [0u8; 4];
                 cid.copy_from_slice(&preamble[preamble.len() - 4..]);
