@@ -13,18 +13,37 @@ fn main() {
             Ok(mut stream) => {
                 println!("accepted new connection");
                 let mut ms = [0u8; 4];
-                let _ = stream.read(&mut ms).unwrap();
+                let _ = stream.read_exact(&mut ms).unwrap();
                 let len = u32::from_be_bytes(ms);
-                let mut buff = vec![0; len as usize];
+                let mut buff = vec![0; (len - 4) as usize];
                 stream.read_exact(&mut buff).unwrap();
+
                 let _api = u16::from_be_bytes([buff[0], buff[1]]);
                 let _req_ver = u16::from_be_bytes([buff[2], buff[3]]);
-                let cid = u32::from_be_bytes([buff[4], buff[5], buff[6], buff[7]]);
-                let mut resp = Vec::with_capacity(8);
-                resp.extend(6u32.to_be_bytes());
-                resp.extend(cid.to_be_bytes());
-                resp.extend(35u16.to_be_bytes());
-                stream.write_all(&resp).unwrap();
+
+                let cid = [buff[4], buff[5], buff[6], buff[7]];
+                let error_code = 0u16.to_be_bytes();
+                let key_count = 2u32.to_be_bytes(); // why??
+                let api_key =
+                    [18u16.to_be_bytes(), 0u16.to_be_bytes(), 4u16.to_be_bytes()].concat(); //is min 4 or zero?
+
+                let mess_len = cid.len()
+                    + error_code.len()
+                    + key_count.len()
+                    + api_key.len()
+                    + size_of::<u32>();
+
+                let mut resp = Vec::with_capacity(mess_len);
+
+                resp.extend((mess_len as u32).to_be_bytes());
+                resp.extend(cid);
+                resp.extend(error_code);
+                resp.extend(key_count);
+                resp.extend(api_key);
+                println!("{:?}", resp);
+                let res = stream.write_all(&resp);
+
+                println!("res {:?}", res);
             }
             Err(e) => {
                 println!("error: {}", e);
