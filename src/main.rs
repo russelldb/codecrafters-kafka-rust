@@ -26,7 +26,9 @@ fn main() {
                 println!("cid is {:?}", cid);
                 let response = [0u32.to_be_bytes(), cid].concat();
                 println!("writing response");
-                stream.write_all(&response).unwrap();
+                let r = stream.write_all(&response);
+
+                println!("did we send it? {:?}", r);
             }
             Err(e) => {
                 println!("error: {}", e);
