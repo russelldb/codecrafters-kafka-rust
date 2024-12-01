@@ -23,7 +23,7 @@ fn main() {
                 // len is first 4 bytes, then next 4 are api key and version, then the next four cid
                 let mut cid = [0u8; 4];
                 cid.copy_from_slice(&preamble[8..]);
-                println!("cid is {:?}", cid);
+                println!("cid is {:?}", u32::from_be_bytes(cid));
                 let response = [0u32.to_be_bytes(), cid].concat();
                 println!("writing response");
                 let r = stream.write_all(&response);
