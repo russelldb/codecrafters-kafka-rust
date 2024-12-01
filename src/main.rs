@@ -20,10 +20,12 @@ fn main() {
                 let mut preamble = [0u8; 12];
                 let req = stream.read(&mut preamble).unwrap();
                 println!("read {} bytes from req", req);
-                // correlation id is last 4 bytes as u32
+                // len is first 4 bytes, then next 4 are api key and version, then the next four cid
                 let mut cid = [0u8; 4];
-                cid.copy_from_slice(&preamble[preamble.len() - 4..]);
+                cid.copy_from_slice(&preamble[8..]);
+                println!("cid is {:?}", cid);
                 let response = [0u32.to_be_bytes(), cid].concat();
+                println!("writing response");
                 stream.write_all(&response).unwrap();
             }
             Err(e) => {
