@@ -16,19 +16,25 @@ fn main() {
         match stream {
             Ok(mut stream) => {
                 println!("accepted new connection");
-
-                let mut preamble = [0u8; 12];
-                let req = stream.read(&mut preamble).unwrap();
-                println!("read {} bytes from req", req);
+                let mut ms = [0u8; 4];
+                let _ = stream.read(&mut ms).unwrap();
                 // len is first 4 bytes, then next 4 are api key and version, then the next four cid
-                let mut cid = [0u8; 4];
-                cid.copy_from_slice(&preamble[8..]);
-                println!("cid is {:?}", u32::from_be_bytes(cid));
-                let response = [0u32.to_be_bytes(), cid].concat();
-                println!("writing response");
-                let r = stream.write_all(&response);
+                let len = u32::from_be_bytes(ms);
+                let mut buff = vec![0; len as usize];
+                stream.read_exact(&mut buff).unwrap();
+                // api-key 2bytes
+                // req-ver 2bytes
+                // cid 4bytes
+                let api = u16::from_be_bytes([buff[0], buff[1]]);
+                let req_ver = u16::from_be_bytes([buff[2], buff[3]]);
+                let cid = &buff[4..8];
+                let cid_u32 =
+                    u32::from_be_bytes(cid.try_into().expect("slice with incorrect length"));
+                println!("api-key {} req_ver {} cid is {:?}", api, req_ver, cid_u32);
 
-                println!("did we send it? {:?}", r);
+                stream
+                    .write_all(&[4u32.to_be_bytes(), cid_u32.to_be_bytes()].concat())
+                    .unwrap();
             }
             Err(e) => {
                 println!("error: {}", e);
