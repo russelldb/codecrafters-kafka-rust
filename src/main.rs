@@ -30,8 +30,8 @@ fn main() {
                     + error_code.len()
                     + key_count.len()
                     + api_key.len()
-                    + size_of::<i32>()
-                    + size_of::<i8>();
+                    + size_of::<i32>() // the message len header
+                    + size_of::<i8>(); // the no tags tag buffer
 
                 let mut resp = Vec::with_capacity(mess_len);
 
