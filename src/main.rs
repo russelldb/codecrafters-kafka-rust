@@ -40,7 +40,7 @@ fn main() {
                 resp.extend(error_code);
                 resp.extend(key_count);
                 resp.extend(api_key);
-                resp.extend(0i8.to_be_bytes());
+                //resp.extend(0i8.to_be_bytes()); // tag buf, yes/no??
                 println!("{:?}", resp);
                 let _ = stream.write_all(&resp);
 
