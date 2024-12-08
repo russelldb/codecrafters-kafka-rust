@@ -4,6 +4,8 @@ use std::{
     net::TcpListener,
 };
 
+use bytes::BufMut;
+
 fn main() {
     println!("Logs from your program will appear here!");
     let listener = TcpListener::bind("127.0.0.1:9092").unwrap();
@@ -21,30 +23,21 @@ fn main() {
                 let _api = i16::from_be_bytes([buff[0], buff[1]]);
                 let _req_ver = i16::from_be_bytes([buff[2], buff[3]]);
 
-                let cid = [buff[4], buff[5], buff[6], buff[7]];
-                let error_code = 0i16.to_be_bytes();
-                let key_count = 1i32.to_be_bytes();
-                let api_key =
-                    [18i16.to_be_bytes(), 4i16.to_be_bytes(), 4i16.to_be_bytes()].concat(); //is min 4 or zero?
-                let mess_len = cid.len()
-                    + error_code.len()
-                    + key_count.len()
-                    + api_key.len()
-                    + size_of::<i32>() // the message len header
-                    + size_of::<i8>(); // the no tags tag buffer
+                let mut data: Vec<u8> = Vec::new();
 
-                let mut resp = Vec::with_capacity(mess_len);
+                data.put(&buff[4..8]); //cid
+                data.put_i16(0); //error code
+                data.put_i8(2); //num keys
+                data.put_i16(18); // api key
+                data.put_i16(0); // min ver
+                data.put_i16(4); //max ver
+                data.put_i8(0); // tag buf
+                data.put_i32(420); // throttle ms
+                data.put_i8(0); // tag buff
 
-                resp.extend((mess_len as i32).to_be_bytes());
-                resp.extend(cid);
-                resp.extend(error_code);
-                resp.extend(key_count);
-                resp.extend(api_key);
-                resp.extend(0i8.to_be_bytes()); // tag buf, yes/no??
-                println!("{:?}", resp);
-                let _ = stream.write_all(&resp);
-
-                let res = stream.flush();
+                let len = data.len() as u32;
+                stream.write_all(&len.to_be_bytes()).unwrap();
+                let res = stream.write_all(&data);
 
                 println!("res {:?}", res);
             }
